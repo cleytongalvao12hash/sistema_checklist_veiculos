@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Usuário - Fundação</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ícone para abas do navegador, favoritos e atalhos -->
+    <link rel="icon" href="{{ url_for('static', filename='icone.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icone.png') }}">
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=4">
+</head>
+<body class="bg-light">
+
+    <!-- CABEÇALHO COM LOGO FUNCABES (ÁREA DO GESTOR) -->
+    <header class="container mt-4 mb-4 position-relative text-center">
+        <a href="/">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Fundação Funcabes" style="max-height: 45px; object-fit: contain;">
+        </a>
+
+        <!-- Botão Voltar (Computador) -->
+        <div class="position-absolute top-50 end-0 translate-middle-y d-none d-md-block">
+            <a href="/usuarios" class="btn btn-outline-secondary fw-bold shadow-sm">⬅ Voltar ao Painel</a>
+        </div>
+
+        <!-- Botão Voltar (Celular) -->
+        <div class="d-block d-md-none mt-3">
+            <a href="/usuarios" class="btn btn-outline-secondary fw-bold shadow-sm">⬅ Voltar ao Painel</a>
+        </div>
+    </header>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Editar Usuário</h5>
+                        <span class="badge bg-light text-dark">ID: {{ usuario.id }}</span>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <form method="POST">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nome Completo</label>
+                                <input type="text" class="form-control" name="nome" value="{{ usuario.nome }}" required>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Login de Acesso</label>
+                                    <input type="text" class="form-control" name="login" value="{{ usuario.login }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-primary">Validade da CNH</label>
+                                    <!-- A tag value="{{ usuario.cnh_validade }}" preenche a data que já está no banco -->
+                                    <input type="date" class="form-control text-secondary fw-bold" name="cnh_validade" value="{{ usuario.cnh_validade }}" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Setor</label>
+                                <select class="form-select" name="setor" required>
+                                    <option value="Contabilidade" {% if usuario.setor == 'Contabilidade' %}selected{% endif %}>Contabilidade</option>
+                                    <option value="Coordenação" {% if usuario.setor == 'Coordenação' %}selected{% endif %}>Coordenação</option>
+                                    <option value="Financeiro" {% if usuario.setor == 'Financeiro' %}selected{% endif %}>Financeiro</option>
+                                    <option value="Jurídico" {% if usuario.setor == 'Jurídico' %}selected{% endif %}>Jurídico</option>
+                                    <option value="Licitação" {% if usuario.setor == 'Licitação' %}selected{% endif %}>Licitação</option>
+                                    <option value="Motoristas" {% if usuario.setor == 'Motoristas' %}selected{% endif %}>Motoristas</option>
+                                    <option value="Sesmt" {% if usuario.setor == 'Sesmt' %}selected{% endif %}>Sesmt</option>
+                                    <option value="Pedagógico" {% if usuario.setor == 'Pedagógico' %}selected{% endif %}>Pedagógico</option>
+                                    <option value="Planejamento" {% if usuario.setor == 'Planejamento' %}selected{% endif %}>Planejamento</option>
+                                    <option value="Recursos Humanos" {% if usuario.setor == 'Recursos Humanos' %}selected{% endif %}>Recursos Humanos</option>
+                                    <option value="Sede" {% if usuario.setor == 'Sede' %}selected{% endif %}>Sede</option>
+                                    <option value="TI" {% if usuario.setor == 'TI' %}selected{% endif %}>TI</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Nova Senha</label>
+                                <input type="password" class="form-control" name="senha" placeholder="Digite apenas se quiser alterar a senha atual">
+                                <div class="form-text text-muted">Deixe em branco para manter a senha atual.</div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/usuarios" class="btn btn-outline-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-primary px-4">Salvar Alterações</button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

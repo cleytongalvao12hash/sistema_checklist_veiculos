@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Movimentação - Funcabes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: white; color: black; font-family: Arial, sans-serif; }
+        .borda-grossa { border: 2px solid #333 !important; }
+        /* REGRAS MÁGICAS PARA O PDF */
+        @media print {
+            .page-break { page-break-after: always; }
+            .no-print { display: none !important; }
+            @page { margin: 1.5cm; }
+        }
+    </style>
+</head>
+<!-- O comando onload abaixo abre a tela de salvar PDF automaticamente -->
+<body onload="window.print()">
+
+    <!-- Menu Superior (Invisível no PDF) -->
+    <div class="no-print bg-light p-3 text-center border-bottom mb-4">
+        <button onclick="window.print()" class="btn btn-primary fw-bold me-2">🖨️ Salvar como PDF / Imprimir</button>
+        <button onclick="window.close()" class="btn btn-secondary fw-bold">Fechar Aba</button>
+    </div>
+
+    <!-- Gera uma página inteira para cada viagem -->
+    {% for log in historico %}
+    <div class="container page-break mb-5">
+        
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-uppercase">Relatório de Frota</h2>
+            <h5 class="text-muted">ID da Movimentação: #{{ log.id }} | Funcabes</h5>
+        </div>
+
+        <table class="table table-bordered borda-grossa align-middle">
+            <thead class="table-light borda-grossa">
+                <tr><th colspan="2" class="text-center fs-5 py-2">🚗 DADOS DO VEÍCULO E CONDUTOR</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td width="50%"><strong>Veículo:</strong> {{ log.veiculo.modelo }}</td>
+                    <td><strong>Placa:</strong> {{ log.veiculo.placa }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Motorista:</strong> {{ log.usuario }}</td>
+                    <td><strong>Data de Saída:</strong> {{ log.data_saida.strftime('%d/%m/%Y às %H:%M') }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="row g-3 mt-2">
+            <div class="col-6">
+                <div class="card borda-grossa h-100">
+                    <div class="card-header fw-bold bg-light py-2">🛫 CHECK-OUT (SAÍDA)</div>
+                    <div class="card-body" style="white-space: pre-wrap; font-size: 0.85rem;"><strong>KM Registrado:</strong> {{ log.km_saida }}
+
+{{ log.obs_saida }}</div>
+                </div>
+            </div>
+            
+            <div class="col-6">
+                <div class="card borda-grossa h-100">
+                    <div class="card-header fw-bold bg-light py-2">🛬 CHECK-IN (ENTRADA)</div>
+                    <div class="card-body" style="white-space: pre-wrap; font-size: 0.85rem;">{% if log.data_entrada %}<strong>Data/Hora:</strong> {{ log.data_entrada.strftime('%d/%m/%Y às %H:%M') }}
+<strong>KM Registrado:</strong> {{ log.km_entrada }}
+
+{{ log.obs_entrada }}
+{% else %}
+<div class="text-center text-muted mt-5"><em>Veículo ainda em uso no momento da geração deste relatório.</em></div>{% endif %}</div>
+                </div>
+            </div>
+        </div>
+        
+        {% if log.itinerario %}
+        <div class="card borda-grossa mt-3">
+            <div class="card-header fw-bold bg-light py-2">📍 TRAJETO REALIZADO</div>
+            <div class="card-body" style="font-size: 0.9rem;">{{ log.itinerario }}</div>
+        </div>
+        {% endif %}
+
+        <!-- REGISTRO FOTOGRÁFICO -->
+        {% if log.fotos_saida or log.fotos_entrada %}
+        <div class="card borda-grossa mt-3" style="page-break-inside: avoid;">
+            <div class="card-header fw-bold bg-light py-2">📸 REGISTRO FOTOGRÁFICO (AVARIAS E OCORRÊNCIAS)</div>
+            <div class="card-body text-center">
+                
+                <!-- FOTOS DA SAÍDA -->
+                {% if log.fotos_saida %}
+                    <h6 class="fw-bold text-start text-muted mb-2">Saída (Check-out):</h6>
+                    <div class="mb-3 text-start">
+                    {% for foto in log.fotos_saida.split(',') %}
+                        {% if foto %}
+                        <img src="{{ url_for('static', filename='uploads/' + foto.strip()) }}" class="img-thumbnail m-1 shadow-sm" style="max-height: 250px; max-width: 45%; object-fit: contain;">
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- FOTOS DA ENTRADA -->
+                {% if log.fotos_entrada %}
+                    <h6 class="fw-bold text-start text-muted mb-2">Devolução (Check-in):</h6>
+                    <div class="text-start">
+                    {% for foto in log.fotos_entrada.split(',') %}
+                        {% if foto %}
+                        <img src="{{ url_for('static', filename='uploads/' + foto.strip()) }}" class="img-thumbnail m-1 shadow-sm" style="max-height: 250px; max-width: 45%; object-fit: contain;">
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                
+            </div>
+        </div>
+        {% endif %}
+        
+    </div>
+    {% endfor %}
+
+</body>
+</html>

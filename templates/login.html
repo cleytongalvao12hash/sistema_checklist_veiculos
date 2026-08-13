@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Controle de Veículos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ícone para abas do navegador, favoritos e atalhos -->
+    <link rel="icon" href="{{ url_for('static', filename='icone.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icone.png') }}">
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest_veiculos.json') }}?v=4">
+</head>
+<body class="bg-light">
+
+    <!-- CABEÇALHO COM LOGO FUNCABES (ÁREA DO MOTORISTA) -->
+    <header class="container mt-4 mb-4 position-relative text-center">
+        <a href="/motorista">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Fundação Funcabes" style="max-height: 45px; object-fit: contain;">
+        </a>
+        
+        <!-- Botão Voltar (Computador) -->
+        <div class="position-absolute top-50 end-0 translate-middle-y d-none d-md-block">
+            <a href="/veiculos" class="btn btn-outline-secondary fw-bold shadow-sm">⬅ Voltar</a>
+        </div>
+        
+        <!-- Botão Voltar (Celular) -->
+        <div class="d-block d-md-none mt-3">
+            <a href="/veiculos" class="btn btn-outline-secondary fw-bold shadow-sm w-100">⬅ Voltar</a>
+        </div>
+    </header>
+
+    <div class="container mt-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                
+                <!-- MENSAGENS FLUTUANTES SOBREPOSTAS E CENTRALIZADAS -->
+                <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1100; width: 100%; max-width: 400px; margin-top: 20px;">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show shadow-lg fw-bold text-center border-0 mb-3" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- CAIXA DE LOGIN PREMIUM -->
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-header bg-dark text-white text-center py-4 border-0 rounded-top-4">
+                        <h4 class="mb-0 fw-bold">🔐 Login de Acesso</h4>
+                    </div>
+                    
+                    <div class="card-body p-4 p-md-5">
+                        <form method="POST" action="/login">
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-secondary">👤 Usuário</label>
+                                <input type="text" class="form-control form-control-lg bg-light border-0 shadow-sm" name="login" placeholder="Digite seu login" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-secondary">🔑 Senha</label>
+                                <input type="password" class="form-control form-control-lg bg-light border-0 shadow-sm" name="senha" placeholder="••••••••" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-dark w-100 btn-lg fw-bold shadow-sm mt-2 mb-3">Entrar no Sistema</button>
+                            
+                        </form>
+                        
+                        <div class="text-center mt-4 border-top pt-4">
+                            <a href="/veiculos" class="text-decoration-none text-muted fw-bold">⬅ Voltar para a Tela Inicial</a>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT OBRIGATÓRIO PARA O BOTAO FECHAR (X) FUNCIONAR -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

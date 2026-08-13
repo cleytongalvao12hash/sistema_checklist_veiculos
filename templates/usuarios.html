@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motoristas e Usuários - Fundação</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ícone para abas do navegador, favoritos e atalhos -->
+    <link rel="icon" href="{{ url_for('static', filename='icone.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icone.png') }}">
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=4">
+</head>
+
+<style>
+    /* Estiliza as barras de rolagem dos cards */
+    .list-group::-webkit-scrollbar {
+        width: 7px;
+    }
+    .list-group::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+    }
+    .list-group::-webkit-scrollbar-thumb {
+        background: #c1c1c1; 
+        border-radius: 4px;
+    }
+    .list-group::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8; 
+    }
+</style>
+
+<body class="bg-light">
+
+    <!-- CABEÇALHO COM LOGO FUNCABES (ÁREA DO GESTOR) -->
+    <header class="container mt-4 mb-4 position-relative text-center">
+        <a href="/">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Fundação Funcabes" style="max-height: 45px; object-fit: contain;">
+        </a>
+        
+        <!-- Botão Voltar (Computador) -->
+        <div class="position-absolute top-50 end-0 translate-middle-y d-none d-md-block">
+            <a href="/" class="btn btn-outline-secondary fw-bold shadow-sm">⬅ Voltar ao Painel</a>
+        </div>
+        
+        <!-- Botão Voltar (Celular) -->
+        <div class="d-block d-md-none mt-3">
+            <a href="/" class="btn btn-outline-secondary fw-bold shadow-sm w-100">⬅ Voltar ao Painel</a>
+        </div>
+    </header>
+
+<div class="container mt-5">
+    
+    <!-- MENSAGENS DO SISTEMA -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- MENU SUPERIOR -->
+    <div class="bg-white p-3 rounded shadow-sm mb-4 d-flex justify-content-center gap-3 border">
+        <a href="/" class="btn btn-outline-secondary px-4 shadow-sm">🏠 Início (Painel Gerenciar)</a>
+        <a href="/historico" class="btn btn-outline-secondary px-4 shadow-sm">📋 Histórico de Movimentações</a>
+    </div>
+
+    <!-- ESTATÍSTICAS E LISTAS EM DUAS COLUNAS -->
+    <div class="row">
+
+        <!-- LADO ESQUERDO: TOTAL DE USUÁRIOS E GERENCIAMENTO -->
+        <div class="col-md-6 mb-4">
+
+            <!-- Card Azul (Colaboradores) -->
+            <div class="card bg-info text-white shadow-sm border-0 mb-3">
+                <div class="card-body text-center">
+                    <h2 class="fw-bold mb-0">{{ usuarios | length }}</h2>
+                    <span>Colaboradores Cadastrados</span>
+                </div>
+            </div>
+
+            <!-- Lista de Gerenciamento -->
+            <div class="card shadow-sm border-secondary">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">Usuários Cadastrados (Gerenciar)</h6>
+                </div>
+                <ul class="list-group list-group-flush" style="max-height: 550px; overflow-y: auto;">
+                    {% for usuario in usuarios %}
+                    <li class="list-group-item p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 fw-bold text-dark">👤 {{ usuario.nome }} <span class="text-muted fw-normal ms-1">({{ usuario.login }})</span></h6>
+                                <span class="badge bg-info text-dark shadow-sm">{{ usuario.setor }}</span>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <a href="/editar_usuario/{{ usuario.id }}" class="btn btn-sm btn-primary" title="Editar dados">✏️ Editar</a>
+                                
+                                <!-- O LINK VIROU UM FORMULÁRIO AQUI -->
+                                <form action="/excluir_usuario/{{ usuario.id }}" method="GET" onsubmit="excluirItem(event, this, 'Deseja apagar o acesso e os dados do usuário {{ usuario.nome }}?');" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Usuário">🗑️</button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted p-4 text-center">Nenhum usuário cadastrado.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- LADO DIREITO: MOTORISTA DESTAQUE E RANKING -->
+        <div class="col-md-6 mb-4">
+
+            <!-- Card Verde (Motorista Mais Ativo) -->
+            <div class="card bg-success text-white shadow-sm border-0 mb-3">
+                <div class="card-body text-center">
+                    <h2 class="fw-bold mb-0 text-truncate" style="font-size: 1.5rem; margin-top: 5px;">🏆 {{ motorista_destaque }}</h2>
+                    <span class="small">Motorista mais ativo</span>
+                </div>
+            </div>
+
+            <!-- Ranking Completo de Motoristas -->
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">📊 Ranking de Uso (Total de Viagens)</h6>
+                </div>
+                <ul class="list-group list-group-flush" style="max-height: 550px; overflow-y: auto;">
+                    {% for motorista, qtd in ranking %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                        <span class="fw-bold text-dark">
+                            <!-- Coloca medalhas nos 3 primeiros lugares -->
+                            {% if loop.index == 1 %}🥇
+                            {% elif loop.index == 2 %}🥈
+                            {% elif loop.index == 3 %}🥉
+                            {% else %}👤{% endif %}
+                            {{ motorista }}
+                        </span>
+                        <span class="badge bg-success rounded-pill" style="font-size: 0.9rem;">{{ qtd }} viagens</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted p-4 text-center">Nenhuma movimentação registrada.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div> <!-- Fim do container -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function excluirItem(event, form, mensagem) {
+        event.preventDefault(); // Trava a exclusão imediata
+        Swal.fire({
+            title: 'Tem certeza?',
+            text: mensagem,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) { form.submit(); }
+        });
+    }
+</script>
+
+</body>
+</html>

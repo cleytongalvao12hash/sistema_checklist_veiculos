@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-out do Veículo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ícone para abas do navegador, favoritos e atalhos -->
+    <link rel="icon" href="{{ url_for('static', filename='icone.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icone.png') }}">
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest_veiculos.json') }}?v=4">
+</head>
+<body class="bg-light">
+
+    <!-- CABEÇALHO COM LOGO FUNCABES (ÁREA DO MOTORISTA) -->
+    <header class="container mt-4 mb-4 position-relative text-center">
+        <a href="/veiculos">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Fundação Funcabes" style="max-height: 40px; object-fit: contain;">
+        </a>
+
+        <!-- Botão Voltar (Computador) -->
+        <div class="position-absolute top-50 end-0 translate-middle-y d-none d-md-block">
+            <a href="/veiculos" class="btn btn-outline-secondary fw-bold shadow-sm">⬅ Voltar</a>
+        </div>
+
+        <!-- Botão Voltar (Celular) -->
+        <div class="d-block d-md-none mt-3">
+            <a href="/veiculos" class="btn btn-outline-secondary fw-bold shadow-sm w-100">⬅ Voltar</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-5 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">Check-out (Saída): {{ veiculo.modelo }} - {{ veiculo.placa }}</h4>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- ENCTYPE ADICIONADO PARA SUPORTAR FOTOS -->
+                        <form method="POST" enctype="multipart/form-data">
+
+                            <div class="alert alert-warning shadow-sm">
+                                <strong>Atenção:</strong> Este veículo será registrado sob a responsabilidade de <strong>{{ session['usuario_nome'] }}</strong>.
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="quilometragem" class="form-label fw-bold">Quilometragem Atual:</label>
+                                <input type="number" class="form-control border-success" id="quilometragem" name="quilometragem" min="0" value="{{ veiculo.km_atual }}" required>
+                                <div class="form-text">Verifique se o KM bate com o painel do carro.</div>
+                            </div>
+
+                            <!-- RÉGUA DE COMBUSTÍVEL DIGITAL -->
+                            <div class="mb-4 p-2 bg-dark rounded text-white shadow-sm border border-secondary" style="max-width: 400px; margin: 0 auto;">
+                                <label class="form-label fw-bold text-light mb-2 fs-6">⛽ Nível de Combustível:</label>
+
+                                <div class="d-flex justify-content-between align-items-end mb-1 px-1">
+                                    <span class="fw-bold text-warning" style="font-size: 0.8rem;">0</span>
+                                    <span class="fw-bold text-warning" style="font-size: 0.8rem;">1</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between gap-1 mb-2" id="painel-barras">
+                                    <div class="barra-combustivel"></div><div class="barra-combustivel"></div><div class="barra-combustivel"></div><div class="barra-combustivel"></div>
+                                    <div class="barra-combustivel"></div><div class="barra-combustivel"></div><div class="barra-combustivel"></div><div class="barra-combustivel"></div>
+                                    <div class="barra-combustivel"></div><div class="barra-combustivel"></div><div class="barra-combustivel"></div><div class="barra-combustivel"></div>
+                                </div>
+
+                                <!-- CÁLCULO PARA TRAZER O ÚLTIMO NÍVEL DO BANCO -->
+                                {% set nivel_str = veiculo.nivel_combustivel | string | lower %}
+                                {% if 'cheio' in nivel_str %}{% set nivel = 12 %}
+                                {% elif 'meio' in nivel_str %}{% set nivel = 6 %}
+                                {% elif 'reserva' in nivel_str %}{% set nivel = 1 %}
+                                {% else %}{% set nivel = veiculo.nivel_combustivel | int(default=12) %}{% endif %}
+
+                                <input type="range" class="form-range custom-range" min="1" max="12" step="1" id="combustivel" name="combustivel" value="{{ nivel }}">
+
+                                <div class="text-center mt-1">
+                                    <span id="texto-combustivel" class="text-warning fw-bold" style="font-size: 0.85rem; letter-spacing: 0.5px;">Nível: 12 (Cheio)</span>
+                                </div>
+                            </div>
+
+                            <!-- SUPER CHECKLIST (OCULTADO COM d-none) -->
+                            <div class="mb-4 d-none">
+                                <div class="p-3 bg-light border rounded shadow-sm">
+                                    <h5 class="fw-bold text-success mb-3">📋 Checklist Inicial do Veículo</h5>
+                                    <p class="text-muted small mb-4">Desmarque os itens que estiverem avariados ou ausentes.</p>
+
+                                    <div class="row">
+                                        <!-- COLUNA 1 -->
+                                        <div class="col-md-6 border-end">
+                                            <h6 class="fw-bold border-bottom pb-1">📄 Documentos e Fluidos</h6>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="CRLV" checked><label class="form-check-label">CRLV</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="CNH" checked><label class="form-check-label">CNH</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Óleo de Motor" checked><label class="form-check-label">Óleo de Motor</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Óleo do Freio" checked><label class="form-check-label">Óleo do Freio</label></div>
+                                            <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="checklist" value="Água do Radiador" checked><label class="form-check-label">Água do Radiador</label></div>
+
+                                            <h6 class="fw-bold border-bottom pb-1">💡 Iluminação e Vidros</h6>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Faróis" checked><label class="form-check-label">Faróis</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Lanternas Dianteiras" checked><label class="form-check-label">Lanternas Dianteiras</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Setas" checked><label class="form-check-label">Setas</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Luzes de Ré" checked><label class="form-check-label">Luzes de Ré</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Lanternas Traseiras" checked><label class="form-check-label">Lanternas Traseiras</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Pára-brisa" checked><label class="form-check-label">Pára-brisa</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Vidros Laterais" checked><label class="form-check-label">Vidros Laterais</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Vidro Traseiro (Vigia)" checked><label class="form-check-label">Vidro Traseiro (Vigia)</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Retrovisores Externos" checked><label class="form-check-label">Retrovisores Externos</label></div>
+                                            <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="checklist" value="Espelho Retrovisor Interno" checked><label class="form-check-label">Retrovisor Interno</label></div>
+                                        </div>
+
+                                        <!-- COLUNA 2 -->
+                                        <div class="col-md-6">
+                                            <h6 class="fw-bold border-bottom pb-1 mt-3 mt-md-0">✨ Estrutura e Conservação</h6>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Placas de Licença" checked><label class="form-check-label">Placas de Licença</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Limpeza Externa" checked><label class="form-check-label">Limpeza Externa</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Limpeza Interna" checked><label class="form-check-label">Limpeza Interna</label></div>
+                                            <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="checklist" value="Bancos" checked><label class="form-check-label">Bancos</label></div>
+
+                                            <h6 class="fw-bold border-bottom pb-1">⚙️ Segurança e Emergência</h6>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Cinto de Segurança" checked><label class="form-check-label">Cinto de Segurança</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Freio de Pé" checked><label class="form-check-label">Freio de Pé</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Freio de Mão" checked><label class="form-check-label">Freio de Mão (Estac.)</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Vidros Elétricos" checked><label class="form-check-label">Vidros Elétricos</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Pneus Calibrados" checked><label class="form-check-label">Pneus Calibrados</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Estepe" checked><label class="form-check-label">Estepe</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Chave de Roda" checked><label class="form-check-label">Chave de Roda</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Macaco" checked><label class="form-check-label">Macaco</label></div>
+                                            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="checklist" value="Triângulo de Segurança" checked><label class="form-check-label">Triângulo de Segurança</label></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- OBSERVAÇÕES (OCULTADO COM d-none) -->
+                            <div class="mb-4">
+                                <label for="avarias" class="form-label fw-bold">📝 Observações (Opcional):</label>
+                                <textarea class="form-control border-secondary" id="avarias" name="avarias" rows="2" placeholder="Ruídos, peças soltas, detalhes de avarias..."></textarea>
+                            </div>
+
+                            <!-- UPLOAD DE FOTOS -->
+                            <div class="mb-5 p-3 border rounded border-warning bg-light">
+                                <label for="fotos" class="form-label fw-bold text-dark">📸 Adicione Fotos (Opcional):</label>
+                                <input class="form-control" type="file" id="fotos" name="fotos" multiple accept="image/*" max="10">
+                                <div class="form-text text-muted mt-2">Faça upload de até 10 arquivos (Apenas para representar alguma avaria antes da saída).</div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg shadow-sm fw-bold">Confirmar Retirada</button>
+                                <a href="/veiculos" class="btn btn-outline-secondary">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estilos do Combustível e Script originais -->
+    <style>
+        .barra-combustivel { height: 12px; flex-grow: 1; background-color: #333; border-radius: 1px; transition: all 0.1s ease-in-out; border: 1px solid #111; }
+        .barra-combustivel.ligada { background-color: #ffb703; box-shadow: 0 0 3px #ffb703; border-color: #ffb703; }
+        .barra-combustivel.reserva { background-color: #dc3545; box-shadow: 0 0 5px #dc3545; border-color: #dc3545; }
+        .custom-range::-webkit-slider-runnable-track { background-color: #555; height: 4px; }
+        .custom-range::-webkit-slider-thumb { margin-top: -6px; width: 14px; height: 14px; }
+        /* --- CORES DO CHECKLIST (SEMÁFORO) --- */
+
+        /* Cor quando LIGADO / OK (Verde) */
+        .form-check-input:checked {
+            background-color: #198754 !important;
+            border-color: #198754 !important;
+        }
+
+        /* Cor quando DESLIGADO / AVARIADO (Vermelho) */
+        .form-check-input:not(:checked) {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            /* Um pequeno brilho para chamar atenção de que está quebrado */
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const slider = document.getElementById('combustivel');
+            const texto = document.getElementById('texto-combustivel');
+            const barras = document.getElementById('painel-barras').querySelectorAll('.barra-combustivel');
+            function atualizarPainel() {
+                const valor = parseInt(slider.value);
+                if (valor === 1) texto.innerText = "Nível: 1 (Reserva)";
+                else if (valor === 6) texto.innerText = "Nível: 6 (Meio)";
+                else if (valor === 12) texto.innerText = "Nível: 12 (Cheio)";
+                else texto.innerText = "Nível: " + valor;
+                barras.forEach((barra, index) => {
+                    barra.classList.remove('ligada', 'reserva');
+                    if (index < valor) {
+                        if (valor === 1 && index === 0) barra.classList.add('reserva');
+                        else barra.classList.add('ligada');
+                    }
+                });
+                if (valor <= 2) texto.classList.replace('text-warning', 'text-danger');
+                else texto.classList.replace('text-danger', 'text-warning');
+            }
+            slider.addEventListener('input', atualizarPainel);
+            atualizarPainel();
+        });
+    </script>
+
+    <!-- SCRIPT PARA EVITAR CLIQUE DUPLO (TRAVA DO BOTÃO) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            if(form) {
+                form.addEventListener('submit', function() {
+                    // Procura o botão de submit dentro do formulário
+                    const btnSubmit = form.querySelector('button[type="submit"]');
+                    if(btnSubmit) {
+                        // Trava o botão para não receber mais cliques
+                        btnSubmit.disabled = true;
+                        // Muda o visual e o texto para avisar que está processando
+                        btnSubmit.classList.replace('btn-danger', 'btn-secondary');
+                        btnSubmit.classList.replace('btn-primary', 'btn-secondary'); // Caso seja azul no checkout
+                        btnSubmit.innerHTML = '⏳ Salvando registro...';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
