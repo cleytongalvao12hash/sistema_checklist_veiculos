@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Registro - Fundação</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ícone para abas do navegador, favoritos e atalhos -->
+    <link rel="icon" href="{{ url_for('static', filename='icone.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icone.png') }}">
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=4">
+</head>
+<body class="bg-light">
+
+    <!-- CABEÇALHO COM LOGO FUNCABES -->
+    <header class="container mt-4 mb-2 text-center">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Fundação Funcabes" style="max-height: 45px; object-fit: contain;">
+    </header>
+
+    <div class="container mt-5 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-secondary">Registro de Viagem #{{ log.id }}</h2>
+            <!-- Atualizado para voltar direto para a aba de histórico -->
+            <a href="/historico" class="btn btn-outline-secondary fw-bold shadow-sm">⬅ Voltar ao Histórico</a>
+        </div>
+
+        <!-- DADOS GERAIS -->
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0 fw-bold">Dados Gerais</h5>
+            </div>
+            <div class="card-body">
+                <div class="row fs-5">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <span class="text-muted d-block fs-6 fw-bold text-uppercase">Veículo</span>
+                        <span class="fw-bold">🚗 {{ log.veiculo.modelo }}</span> <span class="badge bg-secondary">{{ log.veiculo.placa }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted d-block fs-6 fw-bold text-uppercase">Motorista / Usuário</span>
+                        <span class="fw-bold d-block mb-1">👤 {{ log.usuario }}</span>
+                        <span class="badge bg-light text-secondary border shadow-sm">🏢 Setor: {{ setor }}</span>
+                        
+                        <!-- TOTAL RODADO MOVIDO PARA CÁ COM SUPER DESTAQUE -->
+                        {% if log.data_entrada %}
+                            <div class="mt-2 text-primary fw-bold">
+                                🛣️ Total Rodado: <span class="fs-4">{{ log.km_entrada - log.km_saida }}</span> km
+                            </div>
+                        {% else %}
+                            <div class="mt-2 text-warning fw-bold">
+                                ⏳ Viagem em andamento...
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- CHECK-OUT (SAÍDA) -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm border-success h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0 fw-bold">🛫 Check-out (Saída)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                            <div><strong class="text-muted d-block small text-uppercase">Data/Hora</strong> <span class="fw-bold">{{ log.data_saida.strftime('%d/%m/%Y às %H:%M') }}</span></div>
+                            <div class="text-end"><strong class="text-muted d-block small text-uppercase">Quilometragem</strong> <span class="fw-bold fs-5">{{ log.km_saida }} <small>km</small></span></div>
+                        </div>
+                        
+                        <p class="mb-2 fw-bold text-success">📋 Apontamentos / Checklist:</p>
+                        
+                        <!-- CAIXA COM DUAS COLUNAS E QUEBRA DE LINHA (MÁGICA DO CSS) -->
+                        <div class="p-3 bg-white border border-success rounded shadow-sm mb-3">
+                            <div style="white-space: pre-wrap; column-count: 2; column-gap: 20px; column-rule: 1px dashed #ccc; font-size: 0.85rem; line-height: 1.6;">{{ log.obs_saida }}</div>
+                        </div>
+
+                        <!-- GALERIA DE FOTOS (SAÍDA) -->
+                        {% if log.fotos_saida %}
+                        <p class="mb-2 fw-bold text-dark">📸 Fotos (Saída):</p>
+                        <div class="d-flex flex-wrap gap-2 p-3 bg-light border rounded shadow-sm">
+                            {% for foto in log.fotos_saida.split(',') %}
+                                <a href="{{ url_for('static', filename='uploads/' + foto) }}" target="_blank" title="Clique para ampliar">
+                                    <img src="{{ url_for('static', filename='uploads/' + foto) }}" class="img-thumbnail shadow-sm border-secondary" style="height: 110px; width: 110px; object-fit: cover;">
+                                </a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHECK-IN (ENTRADA) -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm border-danger h-100">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0 fw-bold">🛬 Check-in (Devolução)</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if log.data_entrada %}
+                            <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                                <div><strong class="text-muted d-block small text-uppercase">Data/Hora</strong> <span class="fw-bold">{{ log.data_entrada.strftime('%d/%m/%Y às %H:%M') }}</span></div>
+                                <div class="text-end"><strong class="text-muted d-block small text-uppercase">Quilometragem</strong> <span class="fw-bold fs-5">{{ log.km_entrada }} <small>km</small></span></div>
+                            </div>
+
+                            <!-- NOVO: ITINERÁRIO (TRAJETO REALIZADO) -->
+                            {% if log.itinerario %}
+                                <p class="mb-2 fw-bold text-primary">🗺️ Trajeto Realizado:</p>
+                                <div class="p-3 bg-white border border-primary rounded shadow-sm mb-3" style="white-space: pre-wrap; font-size: 0.95rem;">{{ log.itinerario }}</div>
+                            {% endif %}
+                            
+                            <p class="mb-2 fw-bold text-danger">📋 Apontamentos / Checklist:</p>
+                            
+                            <!-- CAIXA COM DUAS COLUNAS E QUEBRA DE LINHA -->
+                            <div class="p-3 bg-white border border-danger rounded shadow-sm mb-3">
+                                <div style="white-space: pre-wrap; column-count: 2; column-gap: 20px; column-rule: 1px dashed #ccc; font-size: 0.85rem; line-height: 1.6;">{{ log.obs_entrada }}</div>
+                            </div>
+
+                            <!-- GALERIA DE FOTOS (ENTRADA) -->
+                            {% if log.fotos_entrada %}
+                            <p class="mb-2 fw-bold text-dark">📸 Fotos (Devolução):</p>
+                            <div class="d-flex flex-wrap gap-2 p-3 bg-light border rounded shadow-sm">
+                                {% for foto in log.fotos_entrada.split(',') %}
+                                    <a href="{{ url_for('static', filename='uploads/' + foto) }}" target="_blank" title="Clique para ampliar">
+                                        <img src="{{ url_for('static', filename='uploads/' + foto) }}" class="img-thumbnail shadow-sm border-secondary" style="height: 110px; width: 110px; object-fit: cover;">
+                                    </a>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                        {% else %}
+                            <!-- TELA BONITA QUANDO O CARRO AINDA ESTÁ NA RUA -->
+                            <div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted p-5 text-center">
+                                <span class="fs-1 mb-3">⏳</span>
+                                <h5 class="fw-bold">Veículo ainda em uso</h5>
+                                <p>As informações de devolução aparecerão aqui quando o motorista fizer o check-in.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

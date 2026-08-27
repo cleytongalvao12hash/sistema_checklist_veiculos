@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico e Relatórios - Fundação</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ícone para abas do navegador, favoritos e atalhos -->
+    <link rel="icon" href="{{ url_for('static', filename='icone.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icone.png') }}">
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=4">
+
+    <style>
+        /* Estiliza a barra de rolagem da tabela */
+        .table-responsive::-webkit-scrollbar { width: 8px; }
+        .table-responsive::-webkit-scrollbar-track { background: #f1f1f1; }
+        .table-responsive::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .table-responsive::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- CABEÇALHO COM LOGO FUNCABES (ÁREA DO GESTOR) -->
+    <header class="container mt-4 mb-4 position-relative text-center">
+        <a href="/">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Fundação Funcabes" style="max-height: 45px; object-fit: contain;">
+        </a>
+        <div class="position-absolute top-50 end-0 translate-middle-y d-none d-md-block">
+            <a href="/" class="btn btn-outline-secondary fw-bold shadow-sm">⬅ Voltar ao Painel</a>
+        </div>
+        <div class="d-block d-md-none mt-3">
+            <a href="/" class="btn btn-outline-secondary fw-bold shadow-sm w-100">⬅ Voltar ao Painel</a>
+        </div>
+    </header>
+
+<div class="container mt-5 mb-5">
+
+    <!-- MENSAGENS FLUTUANTES -->
+    <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1100; width: 100%; max-width: 450px; margin-top: 20px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-lg fw-bold text-center border-0 mb-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- MENU SUPERIOR -->
+    <div class="bg-white p-3 rounded shadow-sm mb-4 d-flex justify-content-center gap-3 border">
+        <a href="/" class="btn btn-outline-secondary px-4 shadow-sm fw-bold">🏠 Início (Painel Gerenciar)</a>
+        <a href="/usuarios" class="btn btn-outline-secondary px-4 shadow-sm fw-bold">👥 Motoristas e Usuários</a>
+    </div>
+
+    <!-- ESTATÍSTICAS E TABELA EM DUAS COLUNAS -->
+    <div class="row">
+
+        <!-- LADO ESQUERDO: TABELA DE HISTÓRICO -->
+        <div class="col-md-7 mb-4">
+            <!-- FORMULÁRIO ENVOLVENDO A TABELA PARA EXCLUSÃO EM LOTE -->
+            <form action="/excluir_historico_lote" method="POST" id="form-historico">
+                <div class="card shadow-sm h-100 border-info">
+
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+                        <h5 class="mb-0 fw-bold">Registro Geral de Viagens</h5>
+                        <div class="d-flex gap-2">
+                            <!-- BOTÃO DE EXCLUIR SELECIONADOS -->
+                            <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="excluirLote()">🗑️ Excluir Selecionados</button>
+
+                            <!-- BOTÃO QUE ABRE O MODAL DO EXCEL -->
+                            <button type="button" class="btn btn-sm btn-light text-info fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#exportModal">📥 Exportar (Excel)</button>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                            <table class="table table-striped table-hover mb-0 text-center align-middle" style="font-size: 0.85rem;">
+                                <thead class="table-light" style="position: sticky; top: 0; z-index: 10;">
+                                    <tr>
+                                        <!-- CHECKBOX PARA MARCAR TODOS -->
+                                        <th style="width: 40px;">
+                                            <input type="checkbox" id="selectAll" class="form-check-input border-secondary shadow-sm" title="Selecionar Todos">
+                                        </th>
+                                        <th>Veículo</th>
+                                        <th>Motorista</th>
+                                        <th>Saída</th>
+                                        <th>Entrada</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in historico.items %}
+                                    <tr>
+                                        <!-- CHECKBOX INDIVIDUAL COM O ID DA VIAGEM -->
+                                        <td>
+                                            <input type="checkbox" name="log_ids" value="{{ log.id }}" class="form-check-input border-secondary check-log">
+                                        </td>
+                                        <td class="fw-semibold">{{ log.veiculo.modelo }}</td>
+                                        <td>{{ log.usuario }}</td>
+                                        <td>{{ log.data_saida.strftime('%d/%m %H:%M') }}</td>
+
+                                        {% if log.data_entrada %}
+                                            <td>{{ log.data_entrada.strftime('%d/%m %H:%M') }}</td>
+                                        {% else %}
+                                            <td><span class="badge bg-warning text-dark shadow-sm">Em andamento</span></td>
+                                        {% endif %}
+
+                                        <td>
+                                            <a href="/detalhe_historico/{{ log.id }}" class="btn btn-sm btn-outline-info">Ver 🔍</a>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-muted py-4 fw-bold">Nenhum histórico registrado no sistema.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- RODAPÉ COM CONTROLES DE PÁGINA -->
+                    <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+                        <small class="text-muted fw-bold">Pág. {{ historico.page }} de {{ historico.pages }}</small>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0 shadow-sm">
+                                {% if historico.has_prev %}
+                                    <li class="page-item"><a class="page-link text-info fw-bold" href="?page={{ historico.prev_num }}">Anterior</a></li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link fw-bold">Anterior</span></li>
+                                {% endif %}
+
+                                {% if historico.has_next %}
+                                    <li class="page-item"><a class="page-link text-info fw-bold" href="?page={{ historico.next_num }}">Próxima</a></li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link fw-bold">Próxima</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- LADO DIREITO: ESTATÍSTICAS E RANKING DE KM -->
+        <div class="col-md-5 mb-4">
+
+            <!-- Card Movimentações -->
+            <div class="card bg-dark text-white shadow-sm border-0 mb-3">
+                <div class="card-body text-center">
+                    <h2 class="fw-bold mb-0">🚀 {{ historico.total }}</h2>
+                    <span>Movimentações Registradas</span>
+                </div>
+            </div>
+
+            <!-- Ranking de Carros por KM -->
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0 fw-bold">🛣️ Veículo Mais Utilizado</h6>
+                </div>
+                <div class="bg-light p-2 text-center border-bottom">
+                    <small class="text-muted fw-bold">Soma total de km rodados por toda a equipe (por veículo).</small>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for carro, km in ranking_carros %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                        <span class="fw-bold text-dark">
+                            <!-- Medalhas para o Top 3 -->
+                            {% if loop.index == 1 %}🥇
+                            {% elif loop.index == 2 %}🥈
+                            {% elif loop.index == 3 %}🥉
+                            {% else %}🚗{% endif %}
+                            {{ carro }}
+                        </span>
+                        <span class="badge bg-primary rounded-pill shadow-sm" style="font-size: 0.9rem;">{{ km }} km</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted p-4 text-center">Nenhum KM registrado ainda.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- MODAL DE EXPORTAÇÃO EXCEL COM FILTRO DE MÊS    -->
+<!-- ============================================== -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            <div class="modal-header bg-success text-white rounded-top-4 border-0">
+                <h5 class="modal-title fw-bold" id="exportModalLabel">📥 Relatório Excel/PDF</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <p class="text-muted fw-bold mb-4">Escolha como deseja exportar os dados da frota:</p>
+
+                <!-- OPÇÃO 1: EXPORTAR POR MÊS ESPECÍFICO -->
+                <div class="card shadow-sm border-secondary mb-4">
+                    <div class="card-header bg-light fw-bold text-secondary">
+                        📅 Exportar um mês específico
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="input-group mb-3">
+                                <input type="month" class="form-control fw-bold text-dark" name="mes_filtro" required>
+
+                                <!-- Botão do Excel (Baixa no mesmo lugar) -->
+                                <button type="submit" class="btn btn-success fw-bold px-3 shadow-sm" formaction="/exportar_excel">
+                                    📥 Excel
+                                </button>
+
+                                <!-- Botão do PDF (Abre em nova guia) -->
+                                <button type="submit" class="btn btn-danger fw-bold px-3 shadow-sm" formaction="/relatorio_impresso" formtarget="_blank">
+                                    📄 PDF
+                                </button>
+                            </div>
+                            <div class="form-text mt-0">Selecione o mês desejado e clique no formato desejado.</div>
+                        </form>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- OPÇÃO 2: EXPORTAR O HISTÓRICO COMPLETO -->
+                <div class="text-center mt-3">
+                    <a href="/exportar_excel" class="btn btn-outline-success fw-bold w-100">📥 Exportar todo o histórico (Completo)</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- SCRIPT PARA MARCAR/DESMARCAR TODAS AS CAIXINHAS (CHECKBOX) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const logCheckboxes = document.querySelectorAll('.check-log');
+
+        selectAllCheckbox.addEventListener('change', function() {
+            logCheckboxes.forEach(function(checkbox) {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+    });
+</script>
+
+<!-- BIBLIOTECA SWEETALERT2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- SCRIPT DA CAIXA FLUTUANTE DE EXCLUSÃO (LOTE) -->
+<script>
+    function excluirLote() {
+        // Conta quantas caixinhas foram marcadas
+        let selecionados = document.querySelectorAll('.check-log:checked').length;
+
+        // Se nenhuma foi marcada, mostra um aviso elegante
+        if (selecionados === 0) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Ops...',
+                text: 'Selecione pelo menos um registro na tabela para excluir!',
+                confirmButtonColor: '#17a2b8'
+            });
+            return;
+        }
+
+        // Se tem itens marcados, mostra a caixa de confirmação
+        Swal.fire({
+            title: 'Deseja excluir ' + selecionados + ' registro(s)?',
+            text: "Esta ação apagará os dados do banco e recalculará as estatísticas automaticamente!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545', // Cor vermelha do botão
+            cancelButtonColor: '#6c757d',  // Cor cinza do cancelar
+            confirmButtonText: '🗑️ Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Se o usuário clicou em Sim, o sistema dispara o formulário
+                document.getElementById('form-historico').submit();
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
